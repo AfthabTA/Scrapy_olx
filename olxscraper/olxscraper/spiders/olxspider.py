@@ -36,6 +36,14 @@ class olxspider(CrawlSpider):
 
         def parse_item(self,response):
            
+                price=response.css('span.T8y-z::text').get()
+                if print is not None:
+                        spl_price=price.split()
+                        if len(spl_price)>=2:
+                                currency=spl_price[0]
+                                amount=spl_price[-1]
+                                price_dic={'amount':amount,'currency':currency,}
+
 
                 yield{
                         'property_name': response.css('h1._1hJph::text').get(),
@@ -44,9 +52,9 @@ class olxspider(CrawlSpider):
 
                         'breadcrumbs': response.css('ol.rui-2Pidb li a::text').getall(),
 
-                        'price': response.css('span.T8y-z::text').get(),
+                        'price': price_dic,
 
-                        'image_url': response.css('img._1Iq92').attrib['src'],
+                        'image_url': response.xpath('//img[@data-aut-id="defaultImg"]/@src').get(),
 
                         'description': response.xpath('//div[@data-aut-id="itemDescriptionContent"]/p/text()').getall(),
 

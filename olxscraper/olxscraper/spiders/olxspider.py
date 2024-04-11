@@ -2,6 +2,7 @@ import scrapy
 # from scrapy.spiders import CrawlSpider,Rule
 # from scrapy.linkextractors import LinkExtractor
 import json
+from scrapy_splash import SplashRequest
 
 
 # class olxspider(scrapy.Spider):
@@ -106,19 +107,68 @@ class olxspider(scrapy.Spider):
         
         
         for property in data['data']:
-        
+                
+            if property['locations_resolved']['ADMIN_LEVEL_3_name']  =='Kozhikode':
+                place=property['locations_resolved']['SUBLOCALITY_LEVEL_1_name']
+            else :
+                place=property['locations_resolved']['ADMIN_LEVEL_3_name']
+
+            price=property['price']['value']['display']   
+            if print is not None:
+                        spl_price=price.split()
+                        if len(spl_price)>=2:
+                                currency=spl_price[0]
+                                amount=spl_price[-1]
+                                price_dic={'amount':amount,'currency':currency,} 
+
+            images=property['images']
+            list_images=[]
+            for i in range(len(images)):
+                  list_images.append(images[i]['url'])
+
+            # owner=property['user_id']   
+            # profile_url='https://www.olx.in/profile/'+owner
+            # profile =SplashRequest(url=profile_url)
+            # seller_name=profile.xpath('//div[@class="_31kC9"]/text()').get()
+            # yield seller_name         
+            # yield SplashRequest(profile_url, self.parse_owner)  
+
+                              
+       
+
             item ={
                 'property_name': property['title'],
 
                 'propery_id': property['id'],
 
-                'breadcrumbs': ['Home', 'Properties', 'For Rent: Houses & Apartments', 'For Rent: Houses & Apartments in Kerala', 'For Rent: Houses & Apartments in Kozhikode', 'For Rent: Houses & Apartments in '+property['locations_resolved']['SUBLOCALITY_LEVEL_1_name'],property['title']],
+                'breadcrumbs': ['Home', 'Properties', 'For Rent: Houses & Apartments', 'For Rent: Houses & Apartments in Kerala', 'For Rent: Houses & Apartments in Kozhikode', 'For Rent: Houses & Apartments in '+place,property['title']],
 
+                'price': price_dic,
+
+                'image_url': list_images,
+
+                'description': property['description'],
+
+                # 'seller_name': ,
+
+                'location': place+','+property['locations_resolved']['ADMIN_LEVEL_3_name']+','+property['locations_resolved']['ADMIN_LEVEL_1_name'],
+
+                'property_type':property['parameters'][0]['value_name'],
+
+                'bathrooms':property['parameters'][2]['value'],
+
+                'bedrooms':property['parameters'][1]['value'],
             }
             
             yield item
 
             next_page= data['metadata']['next_page_url']
-        for i in range(0,5):
+        if next_page is not None:
                 next_page=response.urljoin(next_page)
                 yield scrapy.Request(next_page, callback=self.parse)
+
+  
+
+    # def parse_owner(self, response):
+    #           seller_name=response.xpath('//div[@class="_31kC9"]/text()').get()
+    #           yield seller_name
